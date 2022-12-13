@@ -3,6 +3,8 @@
 #include "config.h"
 #include "area.h"
 #include "sm64.h"
+#include "object_list_processor.h"
+#include "object_fields.h"
 
 typedef struct _Graph {
     u8 init;
@@ -105,6 +107,7 @@ void gpf_3neighbors(GraphPath *p) {
         GraphPath *currNode = &gGraphPool[i];
 
         float dist_to_node = vec3f_dist(p->position, currNode->position);
+        if (dist_to_node == 0) continue;
 
         if (dist_to_node < p->distances[0]) {
             p->distances[2] = p->distances[1];
@@ -139,8 +142,77 @@ void gpf_register(Vec3f pos) {
 
 int gPathsFound = 0;
 
+static int min3v(Vec3f s) {
+    float a = s[0], b = s[1], c = s[2];
+
+    int ret = 0;
+
+    if (b < a) {
+        a = b;
+        ret = 1;
+    }
+    if (c < a) {
+        a = c;
+        ret = 2;
+    }
+    return ret;
+}
+
 int gpf_pathfind(GraphPath **path, Vec3f from, Vec3f to) {
     if (gPathsFound == 0) {
-        gpf_3neighbors();
+        for (int i = 0; i < GPF_SIZE; i++) {
+            if (gGraphPool[i].init == 0) continue;
+            gpf_3neighbors(&gGraphPool[i]);
+        }
+        gPathsFound = 1;
     }
+
+    int pathIdx = 0;
+
+    GraphPath pFrom, pTo;
+
+    gpf_write(&pFrom, from);
+    gpf_3neighbors(&pFrom);
+    gpf_write(&pTo, to);
+    gpf_3neighbors(&pTo);
+
+
+
+    GraphPath *p = &pFrom;
+
+
+    // start with a super naive approach instead of a real algorithm
+    while (p != &pTo) {
+        path[pathIdx] = p;
+        p = p->neighbors[min3v(p->distances)];
+        pathIdx++;
+    }
+
+    if (pathIdx == 0) {
+        // we are already at the end
+        // (does this condition ever happen?)
+        return 1;
+    }
+    return 0;
 }
+
+
+
+// op = ObjectPath
+
+#define o gCurrentObject
+#define oPathWork OBJECT_FIELD_S32P(0x1B)
+
+// worst case is that i 
+struct GraphPath *gPathWork[OBJECT_POOL_CAPACITY][GPF_SIZE];
+
+
+void opObjectInit() {
+    o->oPathWork = gPathWork[0];
+}
+
+
+void opGetPath() {
+
+}
+
