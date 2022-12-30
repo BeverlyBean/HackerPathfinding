@@ -173,3 +173,6 @@ void bhv_rr_cruiser_wing_loop(void);
 void spawn_default_star(f32 x, f32 y, f32 z);
 
 #endif // OBJ_BEHAVIORS_H
+
+void bhv_TestFollower_init(void); void bhv_TestFollower_loop(void);
+void bhv_CustomPathNode_init(void); void bhv_CustomPathNode_loop(void);

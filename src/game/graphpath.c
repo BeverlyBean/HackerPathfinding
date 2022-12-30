@@ -202,17 +202,43 @@ int gpf_pathfind(GraphPath **path, Vec3f from, Vec3f to) {
 
 #define o gCurrentObject
 #define oPathWork OBJECT_FIELD_S32P(0x1B)
+#define oPathWorkIdx OBJECT_FIELD_S32(0x1C)
 
-// worst case is that i 
+// worst case is that i need all this space
+int gPathIdx = 0;
 struct GraphPath *gPathWork[OBJECT_POOL_CAPACITY][GPF_SIZE];
+enum GPFState {
+    GPFS_FINDNODE,
 
+};
 
 void opObjectInit() {
-    o->oPathWork = gPathWork[0];
+    o->oPathWork = gPathWork[gPathIdx++];
+    for (int i = 0; i < GPF_SIZE; i++) {
+        o->oPathWork[i] = 0;
+    }
 }
 
 
-void opGetPath() {
+void opGetPath(Vec3f to) {
+    Vec3f from;
+    vec3f_copy(from, &o->oPosX);
+
+    if (o->oPathWork[0] == 0) {
+        gpf_pathfind(o->oPathWork, from, to);
+        o->oPathWorkIdx = 0;
+    }
+}
+
+void opGo(Vec3f to) {
 
 }
+
+void opFollow() {
+    // switch (o->oAction) {
+    //     case GPFS_FINDNODE:
+
+    // }
+}
+
 

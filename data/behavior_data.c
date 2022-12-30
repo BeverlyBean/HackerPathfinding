@@ -6088,3 +6088,24 @@ const BehaviorScript bhvIntroScene[] = {
 };
 
 
+void bhv_TestFollower_init();
+void bhv_TestFollower_loop();
+void bhv_CustomPathNode_init();
+void bhv_CustomPathNode_loop();
+
+const BehaviorScript bhvTestFollower[] = {
+	BEGIN(OBJ_LIST_DEFAULT),
+	CALL_NATIVE(bhv_TestFollower_init),
+	BEGIN_LOOP(),
+		CALL_NATIVE(bhv_TestFollower_loop),
+	END_LOOP(),
+};
+
+
+const BehaviorScript bhvCustomPathNode[] = {
+	BEGIN(OBJ_LIST_DEFAULT),
+	CALL_NATIVE(bhv_CustomPathNode_init),
+	BEGIN_LOOP(),
+		CALL_NATIVE(bhv_CustomPathNode_loop),
+	END_LOOP(),
+};
