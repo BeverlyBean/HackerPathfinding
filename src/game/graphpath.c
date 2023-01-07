@@ -5,35 +5,34 @@
 #include "sm64.h"
 #include "object_list_processor.h"
 #include "object_fields.h"
-
-typedef struct _Graph {
-    u8 init;
-    Vec3f position;
-    struct _Graph *neighbors[3];
-    float distances[3];
-
-    // struct Object objects[3];
-} GraphPath;
+#include "level_update.h"
+#include "engine/math_util.h"
+#include "engine/surface_collision.h"
+#include "graphpath.h"
 
 GraphPath *graphStart;
 GraphPath *graphEnd;
 
+f32 vec3f_dist(Vec3f v0, Vec3f v1) {
+    return sqrtf(
+          (v0[0] * v1[0])
+        + (v0[1] * v1[1])
+        + (v0[2] * v1[2])
+    );
+}
 
-typedef struct _GraphWork {
-    GraphPath from;
-    GraphPath to;
-} GraphWork;
-
-#define GPF_SIZE 500
 GraphPath gGraphPool[GPF_SIZE];
 
-void find_surface_on_ray(Vec3f orig, Vec3f dir, struct Surface **hit_surface, Vec3f hit_pos, s32 flags);
+// worst case is that i need all this space
+int gPathIdx = 0;
+struct GraphPath *gPathWork[OBJECT_POOL_CAPACITY][GPF_SIZE];
+enum GPFState {
+    GPFS_FINDNODE,
+    GPFS_GOTO_NODE,
+    GPFS_INC_PATH,
+};
 
-typedef struct _gpl {
-    u8 init;
-    GraphPath *p;
-    GraphPath *next;
-} GraphList;
+
 /*
     A Graph traversal node system that objects can use to get fron point A to point B
 
@@ -59,9 +58,22 @@ typedef struct _gpl {
     Objects will use the API
     -an object will be expected to travel from its current position to the first graph node, and from the last graph node to the destination
 */
-
+int graphPathInit = 1;
 void gpf_init() {
     bzero(gGraphPool, sizeof(gGraphPool));
+    bzero(gPathWork, sizeof(gPathWork));
+    graphPathInit = 1;
+
+    // reserve [0] for mario
+    gGraphPool[0].init = 1;
+    gGraphPool[0].objLink = gMarioObject;
+    gMarioState->pathLink = &gGraphPool[0];
+    vec3f_copy(gGraphPool[0].position, gMarioState->pos);
+}
+
+void mario_graphpath_update() {
+    vec3f_copy(gGraphPool[0].position, gMarioState->pos);
+    gpf_3neighbors(&gGraphPool[0]);
 }
 
 int gpf_pop() {
@@ -130,17 +142,48 @@ void gpf_3neighbors(GraphPath *p) {
            p->neighbors[2] = currNode;
         }
     }
+
+    // check if a neighbor has a wall
+    for (int i = 0; i < 3; i++) {
+        Vec3f dir, throw;
+        struct Surface *s = NULL;
+
+        find_surface_on_ray(p->position, dir, &s, throw, RAYCAST_FIND_FLOOR | RAYCAST_FIND_CEIL | RAYCAST_FIND_WALL);
+
+        if (s != NULL) {
+            p->neighbors[i] = NULL;
+            p->distances[i] = 99999.0f;
+        }
+    }
 }
 
-void gpf_register(Vec3f pos) {
+void gpf_register(struct Object *ob) {
     int r = gpf_pop();
 
-    gGraphPool[r].position[0] = pos[0];
-    gGraphPool[r].position[1] = pos[1];
-    gGraphPool[r].position[2] = pos[2];
+
+    // epic double link
+    ob->oPathLink = &gGraphPool[r];
+    gGraphPool[r].objLink = ob;    
+    ob->oPathLinkNum = r;
+
+
+    gGraphPool[r].mark = r;
+
+    gGraphPool[r].position[0] = o->oPosX;
+    gGraphPool[r].position[1] = o->oPosY;
+    gGraphPool[r].position[2] = o->oPosZ;
 }
 
 int gPathsFound = 0;
+
+
+int isaddr(void *v) {
+    u32 a = (u32)v;
+
+
+    return ((a & 0xFF000000) == 0x80000000);
+}
+
 
 static int min3v(Vec3f s) {
     float a = s[0], b = s[1], c = s[2];
@@ -158,7 +201,9 @@ static int min3v(Vec3f s) {
     return ret;
 }
 
-int gpf_pathfind(GraphPath **path, Vec3f from, Vec3f to) {
+int gpf_pathfind(struct Object *oFrom, struct Object *oTo) {
+    GraphPath **path = oFrom->oPathWork;
+
     if (gPathsFound == 0) {
         for (int i = 0; i < GPF_SIZE; i++) {
             if (gGraphPool[i].init == 0) continue;
@@ -169,24 +214,18 @@ int gpf_pathfind(GraphPath **path, Vec3f from, Vec3f to) {
 
     int pathIdx = 0;
 
-    GraphPath pFrom, pTo;
 
-    gpf_write(&pFrom, from);
-    gpf_3neighbors(&pFrom);
-    gpf_write(&pTo, to);
-    gpf_3neighbors(&pTo);
-
-
-
-    GraphPath *p = &pFrom;
+    GraphPath *p = oFrom->oPathLink;
 
 
     // start with a super naive approach instead of a real algorithm
-    while (p != &pTo) {
+    while (isaddr(p) && p != oTo->oPathLink) {
         path[pathIdx] = p;
         p = p->neighbors[min3v(p->distances)];
         pathIdx++;
     }
+
+    o->oPathWorkLen = pathIdx;
 
     if (pathIdx == 0) {
         // we are already at the end
@@ -201,44 +240,64 @@ int gpf_pathfind(GraphPath **path, Vec3f from, Vec3f to) {
 // op = ObjectPath
 
 #define o gCurrentObject
-#define oPathWork OBJECT_FIELD_S32P(0x1B)
-#define oPathWorkIdx OBJECT_FIELD_S32(0x1C)
-
-// worst case is that i need all this space
-int gPathIdx = 0;
-struct GraphPath *gPathWork[OBJECT_POOL_CAPACITY][GPF_SIZE];
-enum GPFState {
-    GPFS_FINDNODE,
-
-};
 
 void opObjectInit() {
     o->oPathWork = gPathWork[gPathIdx++];
     for (int i = 0; i < GPF_SIZE; i++) {
         o->oPathWork[i] = 0;
     }
+    o->oAction = GPFS_FINDNODE;
+    o->oPathWorkLen = 0;
 }
 
 
-void opGetPath(Vec3f to) {
-    Vec3f from;
-    vec3f_copy(from, &o->oPosX);
-
+void opGetPath(struct Object *to) {
     if (o->oPathWork[0] == 0) {
-        gpf_pathfind(o->oPathWork, from, to);
+        gpf_pathfind(o, to);
         o->oPathWorkIdx = 0;
     }
 }
 
-void opGo(Vec3f to) {
 
+void goto_vec(struct Object *obj, GraphPath *p) {
+    if (isaddr(obj) == 0) return;
+    if (isaddr(p) == 0) return;
+    f32 dx = p->position[0] - obj->oPosX;
+    f32 dy = p->position[1] - obj->oPosY + 120.0f;
+    f32 dz = p->position[2] - obj->oPosZ;
+    s16 targetPitch = atan2s(sqrtf(sqr(dx) + sqr(dz)), dy);
+
+    obj_turn_toward_object(o, p->objLink, O_MOVE_ANGLE_YAW_INDEX, 0x1000);
+
+    obj->oMoveAnglePitch = approach_s16_symmetric(obj->oMoveAnglePitch, targetPitch, 0x1000);
+    obj->oVelY = sins(obj->oMoveAnglePitch) * 10.0f;
+    obj->oForwardVel = coss(obj->oMoveAnglePitch) * 10.0f;
+}
+
+void opGo(GraphPath *p) {
+    if (p) {
+        goto_vec(o, p);
+    }
+}
+
+void opUpdatePosition() {
+    GraphPath *p = o->oPathLink;
+
+    vec3f_copy(p->position, &o->oPosX);
+    gpf_3neighbors(p);
 }
 
 void opFollow() {
-    // switch (o->oAction) {
-    //     case GPFS_FINDNODE:
-
-    // }
+    switch (o->oAction) {
+        case GPFS_FINDNODE:
+            opGetPath(gMarioObject);
+            o->oAction = GPFS_GOTO_NODE;
+            break;
+        case GPFS_GOTO_NODE:
+            // opGo(o->oPathWork[o->oPathWorkIdx]);
+            // break;
+    }
 }
+
 
 

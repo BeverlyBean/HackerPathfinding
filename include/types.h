@@ -409,6 +409,8 @@ struct MarioBodyState {
     // u8 filler[4];
 };
 
+#include "game/graphpath.h"
+
 struct MarioState {
     /*0x00*/ u16 playerID;
     /*0x02*/ u16 input;
@@ -487,6 +489,7 @@ struct MarioState {
              s16 moveYaw;
              s16 ceilYaw;
              s16 wallYaw;
+           GraphPath *pathLink;
     // -- HackerSM64 MarioState fields end --
 };
 

@@ -60,6 +60,9 @@ InsnTemplate insn_db[] = {
     {R_TYPE, PARAM_NONE, 0, 0b011010, "DIV"},
     {R_TYPE, PARAM_NONE, 0, 0b011011, "DIVU"},
     {R_TYPE, PARAM_NONE, 0, 0b001000, "JR"},
+
+    {R_TYPE, PARAM_NONE, 0, 0b100101, "OR"},
+    {I_TYPE, PARAM_SWAP_RS_IMM, 0, 0b001101, "ORI"},
  
     {I_TYPE, PARAM_NONE, 0b101000, 0, "SB"},
     {I_TYPE, PARAM_NONE, 0b100000, 0, "LB"},
@@ -70,6 +73,8 @@ InsnTemplate insn_db[] = {
     {I_TYPE, PARAM_NONE, 0b101011, 0, "SW"},
     {I_TYPE, PARAM_NONE, 0b100011, 0, "LW"},
     {I_TYPE, PARAM_LUI,  0b001111, 0, "LUI"},
+
+
 
     // branches
     {I_TYPE, PARAM_SWAP_RS_IMM, 0b000100, 0, "BEQ"},
@@ -127,7 +132,7 @@ char *insn_disasm(InsnData insn, u32 isPC) {
                 case PARAM_JAL:
                     target = 0x80000000 | ((insn.d & 0x1FFFFFF) * 4);
                     if ((u32)parse_map != MAP_PARSER_ADDRESS) {
-                        strp += sprintf(strp, "%-8s %s", insn_db[i].name,
+                        strp += sprintf(strp, "%-8s %08X (%s)", insn_db[i].name, target,
                                                          parse_map(target)
                         );
                     } else {

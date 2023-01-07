@@ -3462,6 +3462,7 @@ const BehaviorScript bhvYellowBall[] = {
     BREAK(),
 };
 
+void mario_graphpath_update();
 UNUSED static const u64 behavior_data_unused_0 = 0;
 const BehaviorScript bhvMario[] = {
     BEGIN(OBJ_LIST_PLAYER),
@@ -3474,6 +3475,7 @@ const BehaviorScript bhvMario[] = {
         CALL_NATIVE(try_print_debug_mario_level_info),
 #endif
         CALL_NATIVE(bhv_mario_update),
+        CALL_NATIVE(mario_graphpath_update),
 #ifdef VANILLA_DEBUG
         CALL_NATIVE(try_do_mario_debug_object_spawn),
 #endif
@@ -6094,7 +6096,15 @@ void bhv_CustomPathNode_init();
 void bhv_CustomPathNode_loop();
 
 const BehaviorScript bhvTestFollower[] = {
-	BEGIN(OBJ_LIST_DEFAULT),
+	BEGIN(OBJ_LIST_GENACTOR),
+    OR_INT(oFlags,
+        OBJ_FLAG_MOVE_XZ_USING_FVEL
+      | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
+      | OBJ_FLAG_SET_FACE_ANGLE_TO_MOVE_ANGLE
+      | OBJ_FLAG_COMPUTE_ANGLE_TO_MARIO
+      | OBJ_FLAG_ACTIVE_FROM_AFAR
+      | OBJ_FLAG_COMPUTE_DIST_TO_MARIO
+    ),
 	CALL_NATIVE(bhv_TestFollower_init),
 	BEGIN_LOOP(),
 		CALL_NATIVE(bhv_TestFollower_loop),
@@ -6104,6 +6114,7 @@ const BehaviorScript bhvTestFollower[] = {
 
 const BehaviorScript bhvCustomPathNode[] = {
 	BEGIN(OBJ_LIST_DEFAULT),
+    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
 	CALL_NATIVE(bhv_CustomPathNode_init),
 	BEGIN_LOOP(),
 		CALL_NATIVE(bhv_CustomPathNode_loop),
