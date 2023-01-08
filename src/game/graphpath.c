@@ -172,6 +172,11 @@ void gpf_register(struct Object *ob) {
     gGraphPool[r].position[0] = o->oPosX;
     gGraphPool[r].position[1] = o->oPosY;
     gGraphPool[r].position[2] = o->oPosZ;
+
+
+    gGraphPool[r].distances[0] =
+    gGraphPool[r].distances[1] =
+    gGraphPool[r].distances[2] = 65535.0f;
 }
 
 int gPathsFound = 0;
@@ -219,7 +224,7 @@ int gpf_pathfind(struct Object *oFrom, struct Object *oTo) {
 
 
     // start with a super naive approach instead of a real algorithm
-    while (isaddr(p) && p != oTo->oPathLink) {
+    while (p != NULL && p != oTo->oPathLink) {
         path[pathIdx] = p;
         p = p->neighbors[min3v(p->distances)];
         pathIdx++;
@@ -248,6 +253,7 @@ void opObjectInit() {
     }
     o->oAction = GPFS_FINDNODE;
     o->oPathWorkLen = 0;
+    gpf_register(o);
 }
 
 
@@ -291,7 +297,7 @@ void opFollow() {
     switch (o->oAction) {
         case GPFS_FINDNODE:
             opGetPath(gMarioObject);
-            o->oAction = GPFS_GOTO_NODE;
+            // o->oAction = GPFS_GOTO_NODE;
             break;
         case GPFS_GOTO_NODE:
             // opGo(o->oPathWork[o->oPathWorkIdx]);
