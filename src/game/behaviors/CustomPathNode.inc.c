@@ -2,11 +2,7 @@
 #include "game/graphpath.h"
 
 void bhv_CustomPathNode_init(void) {
-	if (graphPathInit == 0) {
-		gpf_init();
-		graphPathInit = 1;
-	}
-
+	gpf_init();
 	gpf_register(o);
 }
 void bhv_CustomPathNode_loop(void) {

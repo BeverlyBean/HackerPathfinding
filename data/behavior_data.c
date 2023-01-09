@@ -6096,10 +6096,11 @@ void bhv_CustomPathNode_init();
 void bhv_CustomPathNode_loop();
 
 const BehaviorScript bhvTestFollower[] = {
-	BEGIN(OBJ_LIST_GENACTOR),
+	BEGIN(OBJ_LIST_DEFAULT),
     OR_INT(oFlags,
-        OBJ_FLAG_MOVE_XZ_USING_FVEL
+      0
       | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
+      | OBJ_FLAG_MOVE_XZ_USING_FVEL
       | OBJ_FLAG_SET_FACE_ANGLE_TO_MOVE_ANGLE
       | OBJ_FLAG_COMPUTE_ANGLE_TO_MARIO
       | OBJ_FLAG_ACTIVE_FROM_AFAR

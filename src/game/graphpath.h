@@ -2,22 +2,18 @@
 
 #include "object_fields.h"
 
+#define NEIGHBORSIZE 1
 
 typedef struct _Graph {
     u8 init;
     u8 mark;
     Vec3f position;
     struct Object *objLink;
-    struct _Graph *neighbors[3];
-    float distances[3];
+    struct _Graph *neighbors[NEIGHBORSIZE];
+    float distances[NEIGHBORSIZE];
 
     // struct Object objects[3];
 } GraphPath;
-
-typedef struct _GraphWork {
-    GraphPath from;
-    GraphPath to;
-} GraphWork;
 
 #define GPF_SIZE 500
 

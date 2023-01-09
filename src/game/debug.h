@@ -2,7 +2,7 @@
 #define DEBUG_H
 
 #include <PR/ultratypes.h>
-
+#define DEBUG
 enum DebugPage {
     DEBUG_PAGE_OBJECTINFO,       // 0: objectinfo
     DEBUG_PAGE_CHECKSURFACEINFO, // 1: checkinfo/surfaceinfo
