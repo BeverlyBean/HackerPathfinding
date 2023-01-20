@@ -783,3 +783,4 @@ UNUSED s32 debug_sequence_tracker(s16 debugInputSequence[]) {
 
 #include "behaviors/TestFollower.inc.c"
 #include "behaviors/CustomPathNode.inc.c"
+#include "behaviors/PathNodeMaestro.inc.c"

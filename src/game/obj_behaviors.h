@@ -176,3 +176,4 @@ void spawn_default_star(f32 x, f32 y, f32 z);
 
 void bhv_TestFollower_init(void); void bhv_TestFollower_loop(void);
 void bhv_CustomPathNode_init(void); void bhv_CustomPathNode_loop(void);
+void bhv_PathNodeMaestro_init(void); void bhv_PathNodeMaestro_loop(void);

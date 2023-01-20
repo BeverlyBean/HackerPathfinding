@@ -59,3 +59,59 @@ enum GPFState {
     Objects will use the API
     -an object will be expected to travel from its current position to the first graph node, and from the last graph node to the destination
 */
+
+int gpf_getPath() {
+    for (int i = 1; i < GPF_SIZE; i++) {
+        if (gGraphPool[i].init == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void gpf_register(struct Object *obj) {
+    int r = gpf_getPath();
+    assert(r != -1, "BAD POP");
+
+    GraphPath *p = &gGraphPool[r];
+    p->init = 1;
+    p->mark = r;
+    p->objLink = obj;
+
+    vec3f_copy(p->position, &o->oPosX);
+
+    obj->oPathLink = p;
+    obj->oPathLinkNum = r;
+}
+
+void mario_graphpath_init() {
+    gGraphPool[0].init = 1;
+    gGraphPool[0].mark = 0;
+    gGraphPool[0].objLink = o;
+
+    o->oPathLink = gMarioState->pathLink = &gGraphPool[0];
+    vec3f_copy(gGraphPool[0].position, gMarioState->pos);
+}
+
+void mario_graphpath_update() {
+    vec3f_copy(gGraphPool[0].position, gMarioState->pos);
+}
+
+void opGotoPath(GraphPath *p) {
+    o->oForwardVel = 8.0f;
+    o->oMoveAngleYaw = obj_angle_to_object(o, p->objLink);
+}
+
+void opObjectInit() {
+    gpf_register(o);
+    o->oPathWork = gPathWork[gPathIdx++];
+    o->oPathWorkIdx = 0;
+}
+
+void opFollow() {
+    GraphPath *p  = o->oPathLink;
+    GraphPath *m  = gMarioState->pathLink;
+    // opGotoPath(o->oPathLink);
+    opGotoPath(m);
+}
+

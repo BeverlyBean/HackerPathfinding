@@ -3463,10 +3463,12 @@ const BehaviorScript bhvYellowBall[] = {
 };
 
 void mario_graphpath_update();
+void mario_graphpath_init();
 UNUSED static const u64 behavior_data_unused_0 = 0;
 const BehaviorScript bhvMario[] = {
     BEGIN(OBJ_LIST_PLAYER),
     SET_INT(oIntangibleTimer, 0),
+    CALL_NATIVE(mario_graphpath_init),
     OR_LONG(oFlags, (OBJ_FLAG_PLAYER | OBJ_FLAG_SILHOUETTE)),
     OR_INT(oUnk94, 0x0001),
     SET_HITBOX(/*Radius*/ 37, /*Height*/ 160),
@@ -6094,6 +6096,8 @@ void bhv_TestFollower_init();
 void bhv_TestFollower_loop();
 void bhv_CustomPathNode_init();
 void bhv_CustomPathNode_loop();
+void bhv_PathNodeMaestro_init();
+void bhv_PathNodeMaestro_loop();
 
 const BehaviorScript bhvTestFollower[] = {
 	BEGIN(OBJ_LIST_DEFAULT),
@@ -6107,17 +6111,28 @@ const BehaviorScript bhvTestFollower[] = {
       | OBJ_FLAG_COMPUTE_DIST_TO_MARIO
     ),
 	CALL_NATIVE(bhv_TestFollower_init),
+    DELAY(1),
 	BEGIN_LOOP(),
 		CALL_NATIVE(bhv_TestFollower_loop),
 	END_LOOP(),
 };
 
-
 const BehaviorScript bhvCustomPathNode[] = {
 	BEGIN(OBJ_LIST_DEFAULT),
     OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
 	CALL_NATIVE(bhv_CustomPathNode_init),
+    DELAY(1),
 	BEGIN_LOOP(),
 		CALL_NATIVE(bhv_CustomPathNode_loop),
+	END_LOOP(),
+};
+
+
+const BehaviorScript bhvPathNodeMaestro[] = {
+	BEGIN(OBJ_LIST_DEFAULT),
+	CALL_NATIVE(bhv_PathNodeMaestro_init),
+    DELAY(1),
+	BEGIN_LOOP(),
+		CALL_NATIVE(bhv_PathNodeMaestro_loop),
 	END_LOOP(),
 };

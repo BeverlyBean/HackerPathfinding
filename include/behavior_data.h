@@ -545,3 +545,4 @@ extern const BehaviorScript bhvUnusedFakeStar[];
 
 extern const BehaviorScript bhvTestFollower[];
 extern const BehaviorScript bhvCustomPathNode[];
+extern const BehaviorScript bhvPathNodeMaestro[];
