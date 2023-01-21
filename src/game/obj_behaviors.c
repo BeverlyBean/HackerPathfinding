@@ -2,6 +2,7 @@
 
 #include "sm64.h"
 #include "area.h"
+#include "debug.h"
 #include "audio/external.h"
 #include "behavior_actions.h"
 #include "behavior_data.h"

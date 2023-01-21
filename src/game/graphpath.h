@@ -32,4 +32,6 @@ typedef struct _gpl {
 #define oPathLink OBJECT_FIELD_S32P(0x1B)
 #define oPathLinkNum OBJECT_FIELD_S32(0x1C)
 
+#define oMaestroInit OBJECT_FIELD_S32(0x1B)
+
 extern int graphPathInit;

@@ -14,14 +14,6 @@
 GraphPath *graphStart;
 GraphPath *graphEnd;
 
-f32 vec3f_dist(Vec3f v0, Vec3f v1) {
-    return sqrtf(
-          (v0[0] * v1[0])
-        + (v0[1] * v1[1])
-        + (v0[2] * v1[2])
-    );
-}
-
 GraphPath gGraphPool[GPF_SIZE];
 
 // worst case is that i need all this space
@@ -33,6 +25,51 @@ enum GPFState {
     GPFS_INC_PATH,
 };
 
+void gpf_findneighbors(GraphPath *p) {
+    int j;
+    // find 1 neighbor for now
+    f32 min = 999999.0f;
+    int count = 0;
+    for (j = 0; j < GPF_SIZE; j++) {
+        GraphPath *pp = &gGraphPool[j];
+        if (pp == p) continue;
+        if (pp->init == 0) continue;
+
+        count++;
+
+        f32 dist = 0.0f;
+
+        vec3f_get_lateral_dist(p->position, pp->position, &dist);
+
+        assert (dist >= 0, "NEGATIVE DIST")
+
+        if (dist < 0.001f) {
+            continue;
+        }
+
+        if (dist < min) {
+            p->neighbors[0] = pp;
+            p->distances[0] = dist;
+            min = dist;
+        }
+
+
+        // todo: 
+        // struct Surface *s;
+        // Vec3f hit;
+        // Vec3f dir;
+        // vec3f_diff(dir, pp->position, p->position);
+        // find_surface_on_ray(p->position, dir, &s, hit, RAYCAST_FIND_WALL);
+    }
+}
+
+void gpf_setup_neighbors() {
+    for (int i = 0; i < GPF_SIZE; i++) {
+        GraphPath *p = &gGraphPool[i];
+
+        gpf_findneighbors(p);
+    }
+}
 
 /*
     A Graph traversal node system that objects can use to get fron point A to point B
@@ -72,6 +109,7 @@ int gpf_getPath() {
 void gpf_register(struct Object *obj) {
     int r = gpf_getPath();
     assert(r != -1, "BAD POP");
+    assert(r != 0, "GOT MARIO");
 
     GraphPath *p = &gGraphPool[r];
     p->init = 1;
@@ -98,6 +136,10 @@ void mario_graphpath_update() {
 }
 
 void opGotoPath(GraphPath *p) {
+    if (p == NULL) {
+        o->oForwardVel = 0.0f;
+        return;
+    }
     o->oForwardVel = 8.0f;
     o->oMoveAngleYaw = obj_angle_to_object(o, p->objLink);
 }
@@ -108,10 +150,13 @@ void opObjectInit() {
     o->oPathWorkIdx = 0;
 }
 
+void opGetNeighbors() {
+    gpf_findneighbors(o->oPathLink);
+}
+
 void opFollow() {
     GraphPath *p  = o->oPathLink;
     GraphPath *m  = gMarioState->pathLink;
-    // opGotoPath(o->oPathLink);
-    opGotoPath(m);
+    opGotoPath(p->neighbors[0]);
 }
 

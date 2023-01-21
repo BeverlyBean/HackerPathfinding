@@ -6119,7 +6119,7 @@ const BehaviorScript bhvTestFollower[] = {
 
 const BehaviorScript bhvCustomPathNode[] = {
 	BEGIN(OBJ_LIST_DEFAULT),
-    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
+    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE | OBJ_FLAG_ACTIVE_FROM_AFAR),
 	CALL_NATIVE(bhv_CustomPathNode_init),
     DELAY(1),
 	BEGIN_LOOP(),
@@ -6130,8 +6130,9 @@ const BehaviorScript bhvCustomPathNode[] = {
 
 const BehaviorScript bhvPathNodeMaestro[] = {
 	BEGIN(OBJ_LIST_DEFAULT),
-	CALL_NATIVE(bhv_PathNodeMaestro_init),
+    OR_INT(oFlags,OBJ_FLAG_ACTIVE_FROM_AFAR),
     DELAY(1),
+	CALL_NATIVE(bhv_PathNodeMaestro_init),
 	BEGIN_LOOP(),
 		CALL_NATIVE(bhv_PathNodeMaestro_loop),
 	END_LOOP(),
