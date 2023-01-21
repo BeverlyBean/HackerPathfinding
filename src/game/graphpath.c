@@ -39,7 +39,7 @@ void gpf_findneighbors(GraphPath *p) {
 
         f32 dist = 0.0f;
 
-        vec3f_get_lateral_dist(p->position, pp->position, &dist);
+        vec3f_get_dist(p->position, pp->position, &dist);
 
         assert (dist >= 0, "NEGATIVE DIST")
 
