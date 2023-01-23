@@ -25,42 +25,83 @@ enum GPFState {
     GPFS_INC_PATH,
 };
 
+int gpf_closestneighbor(GraphPath *p) {
+    f32 dst = 99999.0f;
+    int ret = 0;
+    for (int i = 0; i < 3; i++) {
+        if (p->distances[i] < dst) {
+            ret = i;
+            dst = p->distances[i];
+        }
+    }
+
+    return ret;
+}
+
 void gpf_findneighbors(GraphPath *p) {
     int j;
-    // find 1 neighbor for now
-    f32 min = 999999.0f;
-    int count = 0;
+
+    f32 mins[3];
+    GraphPath *tmpneighbors[3];
+    mins[0] = mins[1] = mins[2] = 999999.0f;
+
     for (j = 0; j < GPF_SIZE; j++) {
         GraphPath *pp = &gGraphPool[j];
         if (pp == p) continue;
         if (pp->init == 0) continue;
 
-        count++;
-
         f32 dist = 0.0f;
+
+        // todo: 
+        struct Surface *s = NULL;
+        Vec3f hit;
+        Vec3f dir;
+        vec3f_diff(dir, p->position, pp->position);
+        find_surface_on_ray(p->position, dir, &s, hit, RAYCAST_FIND_WALL);
+
+        if (s != NULL) continue;
 
         vec3f_get_dist(p->position, pp->position, &dist);
 
-        assert (dist >= 0, "NEGATIVE DIST")
+        // assert (dist >= 0, "NEGATIVE DIST");
 
         if (dist < 0.001f) {
             continue;
         }
 
-        if (dist < min) {
-            p->neighbors[0] = pp;
-            p->distances[0] = dist;
-            min = dist;
+        // if (dist < min) {
+        //     p->neighbors[0] = pp;
+        //     p->distances[0] = dist;
+        //     min = dist;
+        // }
+
+        if (dist < mins[0]) {
+            mins[2] = mins[1];
+            mins[1] = mins[0];
+            mins[0] = dist;
+
+            tmpneighbors[2] = tmpneighbors[1];
+            tmpneighbors[1] = tmpneighbors[0];
+            tmpneighbors[0] = pp;
+        } else if (dist < mins[1]) {
+            mins[2] = mins[1];
+            mins[1] = dist;
+
+            tmpneighbors[2] = tmpneighbors[1];
+            tmpneighbors[1] = pp;
+        } else if (dist < mins[2]) {
+            mins[2] = dist;
+
+            tmpneighbors[2] = pp;
         }
-
-
-        // todo: 
-        // struct Surface *s;
-        // Vec3f hit;
-        // Vec3f dir;
-        // vec3f_diff(dir, pp->position, p->position);
-        // find_surface_on_ray(p->position, dir, &s, hit, RAYCAST_FIND_WALL);
     }
+    p->neighbors[0] = tmpneighbors[0];
+    p->neighbors[1] = tmpneighbors[1];
+    p->neighbors[2] = tmpneighbors[2];
+
+    p->distances[0] = mins[0];
+    p->distances[1] = mins[1];
+    p->distances[2] = mins[2];
 }
 
 void gpf_setup_neighbors() {
@@ -148,6 +189,7 @@ void opObjectInit() {
     gpf_register(o);
     o->oPathWork = gPathWork[gPathIdx++];
     o->oPathWorkIdx = 0;
+    o->oPathWorkLen = 0;
 }
 
 void opGetNeighbors() {
@@ -157,6 +199,6 @@ void opGetNeighbors() {
 void opFollow() {
     GraphPath *p  = o->oPathLink;
     GraphPath *m  = gMarioState->pathLink;
-    opGotoPath(p->neighbors[0]);
+    opGotoPath(p->neighbors[gpf_closestneighbor(p)]);
 }
 
