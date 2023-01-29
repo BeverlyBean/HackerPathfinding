@@ -14,6 +14,9 @@
 GraphPath *graphStart;
 GraphPath *graphEnd;
 
+
+int dbgPathCount = 0;
+
 GraphPath gGraphPool[GPF_SIZE];
 
 // worst case is that i need all this space
@@ -40,9 +43,11 @@ int gpf_closestneighbor(GraphPath *p) {
 
 void gpf_findneighbors(GraphPath *p) {
     int j;
+    int count = 0;
 
     f32 mins[3];
     GraphPath *tmpneighbors[3];
+    tmpneighbors[0] = tmpneighbors[1] = tmpneighbors[2] = NULL;
     mins[0] = mins[1] = mins[2] = 999999.0f;
 
     for (j = 0; j < GPF_SIZE; j++) {
@@ -65,7 +70,7 @@ void gpf_findneighbors(GraphPath *p) {
 
         // assert (dist >= 0, "NEGATIVE DIST");
 
-        if (dist < 0.001f) {
+        if (dist < MINIMUM_PATH_DIST) {
             continue;
         }
 
@@ -94,7 +99,12 @@ void gpf_findneighbors(GraphPath *p) {
 
             tmpneighbors[2] = pp;
         }
+
+        count++;
     }
+
+    // assert(count < )
+
     p->neighbors[0] = tmpneighbors[0];
     p->neighbors[1] = tmpneighbors[1];
     p->neighbors[2] = tmpneighbors[2];
@@ -105,6 +115,9 @@ void gpf_findneighbors(GraphPath *p) {
 }
 
 void gpf_setup_neighbors() {
+    // static int times = 0;
+
+    // assert(0, "RAN");
     for (int i = 0; i < GPF_SIZE; i++) {
         GraphPath *p = &gGraphPool[i];
 
@@ -151,16 +164,24 @@ void gpf_register(struct Object *obj) {
     int r = gpf_getPath();
     assert(r != -1, "BAD POP");
     assert(r != 0, "GOT MARIO");
+    assert(gGraphPool[r - 1].init == 1, "OVERRAN ALLOC");
+    assert(gGraphPool[r + 1].init == 0, "STACK ORDER MISMATCH");
 
     GraphPath *p = &gGraphPool[r];
     p->init = 1;
     p->mark = r;
+
+    assert(obj != NULL, "HOW DOES THIS HAPPEN");
     p->objLink = obj;
 
     vec3f_copy(p->position, &o->oPosX);
 
     obj->oPathLink = p;
     obj->oPathLinkNum = r;
+
+    assert(obj->oPathLinkNum != 0, "GOT MARIO AGAIN");
+    assert(obj->oPathLinkNum == p->mark, "HOW THE FUCK");
+    dbgPathCount++;
 }
 
 void mario_graphpath_init() {
@@ -169,6 +190,7 @@ void mario_graphpath_init() {
     gGraphPool[0].objLink = o;
 
     o->oPathLink = gMarioState->pathLink = &gGraphPool[0];
+    o->oPathLinkNum = gGraphPool[0].mark;
     vec3f_copy(gGraphPool[0].position, gMarioState->pos);
 }
 
@@ -182,7 +204,22 @@ void opGotoPath(GraphPath *p) {
         return;
     }
     o->oForwardVel = 8.0f;
-    o->oMoveAngleYaw = obj_angle_to_object(o, p->objLink);
+    struct Object *ol = p->objLink;
+
+
+    assert(ol != NULL, "OBJ NULL HOW THE FUC");
+    o->oMoveAngleYaw = obj_angle_to_object(o, ol);
+
+    f32 dist = 0;
+    vec3f_get_dist(&o->oPosX, &ol->oPosX, &dist);
+    if (dist < MINIMUM_PATH_DIST) {
+        GraphPath *op = o->oPathLink;
+        bcopy(p->neighbors, op->neighbors, sizeof(p->neighbors));
+    }
+
+    char t[20];
+    sprintf(t, "%f", dist);
+    print_text(20, 20, t);
 }
 
 void opObjectInit() {
@@ -199,6 +236,10 @@ void opGetNeighbors() {
 void opFollow() {
     GraphPath *p  = o->oPathLink;
     GraphPath *m  = gMarioState->pathLink;
-    opGotoPath(p->neighbors[gpf_closestneighbor(p)]);
+
+    GraphPath *toFollow = p->neighbors[gpf_closestneighbor(p)];
+    if (toFollow != NULL) {
+        opGotoPath(toFollow);
+    }
 }
 
