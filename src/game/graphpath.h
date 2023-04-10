@@ -26,6 +26,7 @@ typedef struct _gpl {
     GraphPath *next;
 } GraphList;
 
+
 #define oPathWork OBJECT_FIELD_S32P(0x1B)
 #define oPathWorkIdx OBJECT_FIELD_S32(0x1C)
 #define oPathWorkLen OBJECT_FIELD_S32(0x1D)

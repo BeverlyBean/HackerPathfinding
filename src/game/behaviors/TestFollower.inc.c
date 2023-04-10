@@ -10,23 +10,23 @@ void bhv_TestFollower_loop(void) {
 	// opGetNeighbors();
 	opFollow();
 
-	char t[50];
-	char t2[50];
-	sprintf(t, "%x %x %x",
-		p->neighbors[0],
-		p->neighbors[1],
-		p->neighbors[2]
-	);
+	// char t[50];
+	// char t2[50];
+	// sprintf(t, "%x %x %x",
+	// 	p->neighbors[0],
+	// 	p->neighbors[1],
+	// 	p->neighbors[2]
+	// );
 
 
-	sprintf(t2, "%f %f %f",
-		p->distances[0],
-		p->distances[1],
-		p->distances[2]
-	);
-	print_text(20, 20, t);
-	print_text(20, 40, t2);
-	print_text_fmt_int(20, 60, "M %d", o->oPathLinkNum);
+	// sprintf(t2, "%f %f %f",
+	// 	p->distances[0],
+	// 	p->distances[1],
+	// 	p->distances[2]
+	// );
+	// print_text(20, 20, t);
+	// print_text(20, 40, t2);
+	// print_text_fmt_int(20, 60, "M %d", o->oPathLinkNum);
 
 	// if (o->oPathLinkNum != p->mark) {
 		// *(vs32*)o->oPathLinkNum=0;
