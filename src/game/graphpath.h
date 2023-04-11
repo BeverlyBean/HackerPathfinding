@@ -2,7 +2,7 @@
 
 #include "object_fields.h"
 
-#define NEIGHBORSIZE 1
+#define NEIGHBORSIZE 3
 
 typedef struct _Graph {
     u8 init;
@@ -12,7 +12,8 @@ typedef struct _Graph {
     struct _Graph *neighbors[NEIGHBORSIZE];
     float distances[NEIGHBORSIZE];
 
-    // struct Object objects[3];
+    // todo: viral init?
+    struct Object *objects[3];
 } GraphPath;
 
 #define GPF_SIZE 500

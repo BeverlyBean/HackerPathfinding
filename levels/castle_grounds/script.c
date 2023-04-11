@@ -12,6 +12,7 @@
 #include "levels/scripts.h"
 
 #include "actors/common1.h"
+#include "actors/group0.h"
 
 /* Fast64 begin persistent block [includes] */
 /* Fast64 end persistent block [includes] */
@@ -49,6 +50,9 @@ const LevelScript level_castle_grounds_entry[] = {
 	LOAD_MODEL_FROM_GEO(MODEL_CASTLE_GROUNDS_FLAG, castle_grounds_geo_000660), 
 	LOAD_MODEL_FROM_GEO(MODEL_CASTLE_GROUNDS_CANNON_GRILL, castle_grounds_geo_000724), 
 
+	#define MODEL_ARROW 0xF1
+	LOAD_MODEL_FROM_GEO(MODEL_ARROW, dbgArrow_geo),
+
 	/* Fast64 begin persistent block [level commands] */
 	/* Fast64 end persistent block [level commands] */
 
@@ -58,22 +62,22 @@ const LevelScript level_castle_grounds_entry[] = {
 		WARP_NODE(0xF1, LEVEL_BOB, 0x01, 0x0A, WARP_NO_CHECKPOINT),
 		OBJECT(MODEL_NONE, 3537, 432, -3162, 0, 0, 0, 0x00000000, bhvPathNodeMaestro),
 		MARIO_POS(0x01, 0, 4074, 100, -6116),
-		OBJECT(MODEL_NONE, 3524, 101, -2319, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 3162, 101, -2428, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 3175, 101, -4052, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 3838, 101, -4024, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 3887, 101, -2777, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4132, 101, -2652, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4370, 101, -2406, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4838, 101, -2507, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4853, 101, -3340, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4503, 101, -3408, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4485, 101, -4038, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4834, 101, -4067, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4833, 101, -4695, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4121, 101, -4766, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 4126, 101, -5424, 0, 0, 0, 0x00000000, bhvCustomPathNode),
-		OBJECT(MODEL_NONE, 3511, 101, -1495, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 3524, 101, -2319, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 3162, 101, -2428, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 3175, 101, -4052, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 3838, 101, -4024, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 3887, 101, -2777, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4132, 101, -2652, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4370, 101, -2406, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4838, 101, -2507, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4853, 101, -3340, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4503, 101, -3408, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4485, 101, -4038, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4834, 101, -4067, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4833, 101, -4695, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4121, 101, -4766, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 4126, 101, -5424, 0, 0, 0, 0x00000000, bhvCustomPathNode),
+		OBJECT(MODEL_ARROW, 3511, 101, -1495, 0, 0, 0, 0x00000000, bhvCustomPathNode),
 		OBJECT(MODEL_WOODEN_SIGNPOST, 3512, 101, -913, 0, 0, 0, 0x00000000, bhvTestFollower),
 		OBJECT(MODEL_NONE, 3452, 100, -292, 0, 0, 0, 0x000A0000, bhvSpinAirborneWarp),
 		TERRAIN(castle_grounds_area_1_collision),

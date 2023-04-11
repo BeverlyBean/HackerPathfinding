@@ -2,20 +2,16 @@
 #include "game/graphpath.h"
 
 void bhv_TestFollower_init(void) {
-	opObjectInit();
 }
 void bhv_TestFollower_loop(void) {
 	GraphPath *p = o->oPathLink;
 
-	// opGetNeighbors();
-	opFollow();
+	
 
 	// char t[50];
-	// char t2[50];
-	// sprintf(t, "%x %x %x",
-	// 	p->neighbors[0],
-	// 	p->neighbors[1],
-	// 	p->neighbors[2]
+	// // char t2[50];
+	// sprintf(t, "%f",
+	// 	dist
 	// );
 
 
