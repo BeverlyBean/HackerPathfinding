@@ -34,7 +34,6 @@ enum GPFState {
 
 static void __gpf_ctor(GraphPath *p) {
     p->init = 1;
-    p->mark = gPoolIdx;
     p->neighbors[0] = 
     p->neighbors[1] = 
     p->neighbors[2] = NULL;
@@ -72,8 +71,30 @@ Obj *__gpf_NearestObj(int i, GraphPath *p) {
             if ((objDist <= minDist)
              && (objDist > maxDist)
             ) {
-                closestObj = obj;
-                minDist = objDist;
+                // skip that if theres a wall
+                struct Surface *hit = NULL;
+                Vec3f hit_pos;
+                Vec3f dir;
+                Vec3f oPosSource, oPosDest;
+                vec3f_copy(oPosSource, &_o->oPosX);
+                vec3f_copy(oPosDest, &obj->oPosX);
+
+                oPosSource[1] += 15;
+                oPosDest[1] += 15;
+
+                vec3f_diff(dir, oPosDest, oPosSource);
+                find_surface_on_ray(
+                    oPosSource,
+                    dir,
+                    &hit,
+                    hit_pos,
+                    RAYCAST_FIND_FLOOR | RAYCAST_FIND_WALL
+                );
+
+                if (hit == NULL) {
+                    closestObj = obj;
+                    minDist = objDist;
+                }
             }
         }
 
@@ -83,11 +104,12 @@ Obj *__gpf_NearestObj(int i, GraphPath *p) {
 
     p->distances[i] = minDist;
 
-    char buf[50];
-    sprintf(buf, "went through %d entries bhv %08X", __i, behaviorAddr);
-    assert(closestObj != NULL, buf);
+    // char buf[50];
+    // sprintf(buf, "went through %d entries idx %d bhv %08X", __i, i, behaviorAddr);
+    // assert(closestObj != NULL, buf);
     return closestObj;
 }
+
 
 static GraphPath *__gpf_Pop() {
     GraphPath *ret = &gGraphPool[gPoolIdx++];
@@ -108,8 +130,10 @@ static void __gpf_NeighborFunc(Obj *oo) {
         }
 
         p->objects[i] = __gpf_NearestObj(i, p);
-        Obj *oi = p->objects[i];
 
+
+        Obj *oi = p->objects[i];
+        if (oi == NULL) continue;
 
         if (oi->oPathLink == NULL) {
             gpf_ObjectInit(oi);
@@ -140,6 +164,10 @@ void gpf_ObjectInit(Obj *oo) {
 }
 
 void gpf_ObjectUpdate(Obj *oo) {
+    GraphPath *p = oo->oPathLink;
+
+    vec3f_copy(p->position, &o->oPosX);
+
     __gpf_NeighborFunc(oo);
 }
 
@@ -150,5 +178,3 @@ void mario_graphpath_init() {
 void mario_graphpath_update() {
     __gpf_NeighborFunc(gMarioObject);
 }
-
-

@@ -5,8 +5,8 @@
 #define NEIGHBORSIZE 3
 
 typedef struct _Graph {
+    u8 _visited;
     u8 init;
-    u8 mark;
     Vec3f position;
     struct Object *objLink;
     struct _Graph *neighbors[NEIGHBORSIZE];

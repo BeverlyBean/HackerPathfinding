@@ -1298,7 +1298,7 @@ s32 anim_spline_poll(Vec3f result) {
  *                    RAYCASTING                  *
  **************************************************/
 
-#define RAY_OFFSET 30.0f /* How many units to extrapolate surfaces when testing for a raycast */
+#define RAY_OFFSET 5.0f /* How many units to extrapolate surfaces when testing for a raycast */
 #define RAY_STEPS      4 /* How many steps to do when casting rays, default to quartersteps.  */
 
 /**
