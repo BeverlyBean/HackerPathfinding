@@ -489,7 +489,6 @@ struct MarioState {
              s16 moveYaw;
              s16 ceilYaw;
              s16 wallYaw;
-           GraphPath *pathLink;
     // -- HackerSM64 MarioState fields end --
 };
 

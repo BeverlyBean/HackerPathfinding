@@ -6100,7 +6100,7 @@ void bhv_PathNodeMaestro_init();
 void bhv_PathNodeMaestro_loop();
 
 const BehaviorScript bhvTestFollower[] = {
-	BEGIN(OBJ_LIST_DEFAULT),
+	BEGIN(OBJ_LIST_GENACTOR),
     OR_INT(oFlags,
       0
       | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE

@@ -2,11 +2,13 @@
 
 #include "object_fields.h"
 
-#define NEIGHBORSIZE 3
+#define NEIGHBORSIZE 4
 
 typedef struct _Graph {
-    u8 _visited;
+    u8 _inQueue;
     u8 init;
+    u16 _index;
+    u32 magic;
     Vec3f position;
     struct Object *objLink;
     struct _Graph *neighbors[NEIGHBORSIZE];
@@ -16,23 +18,21 @@ typedef struct _Graph {
     struct Object *objects[3];
 } GraphPath;
 
+#define GPF_MAGIC 0x50415448
 #define GPF_SIZE 500
 #define MINIMUM_PATH_DIST 10.0f
 
 void find_surface_on_ray(Vec3f orig, Vec3f dir, struct Surface **hit_surface, Vec3f hit_pos, s32 flags);
 
-typedef struct _gpl {
-    u8 init;
-    GraphPath *p;
-    GraphPath *next;
-} GraphList;
-
 
 #define oPathWork OBJECT_FIELD_S32P(0x1B)
 #define oPathWorkIdx OBJECT_FIELD_S32(0x1C)
-#define oPathWorkLen OBJECT_FIELD_S32(0x1D)
-#define oPathLink OBJECT_FIELD_S32P(0x1E)
-#define oPathLinkNum OBJECT_FIELD_S32(0x1F)
+#define oPathLink OBJECT_FIELD_S32P(0x1D)
+#define oFollower OBJECT_FIELD_S32(0x1E)
+// #define oPathWorkLen OBJECT_FIELD_S32(0x1F)
+
+#define d__gpf_SourceBhv ((uintptr_t *)bhvTestFollower)
+#define d__gpf_DestBhv ((uintptr_t *)bhvMario)
 
 
 #define oMaestroInit OBJECT_FIELD_S32(0x1B)

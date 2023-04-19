@@ -4,7 +4,7 @@ void bhv_PathNodeMaestro_init(void) {
 }
 void bhv_PathNodeMaestro_loop(void) {
 	if (o->oMaestroInit == 0) {
-		gpf_setup_neighbors();
+		// gpf_setup_neighbors();
 		o->oMaestroInit = 1;
 	}
 }
