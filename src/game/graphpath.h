@@ -2,7 +2,7 @@
 
 #include "object_fields.h"
 
-#define NEIGHBORSIZE 4
+#define NEIGHBORSIZE 1
 
 typedef struct _Graph {
     u8 _inQueue;
@@ -27,8 +27,11 @@ void find_surface_on_ray(Vec3f orig, Vec3f dir, struct Surface **hit_surface, Ve
 
 #define oPathWork OBJECT_FIELD_S32P(0x1B)
 #define oPathWorkIdx OBJECT_FIELD_S32(0x1C)
+
+// 0xFC
 #define oPathLink OBJECT_FIELD_S32P(0x1D)
 #define oFollower OBJECT_FIELD_S32(0x1E)
+#define OBJ_PATH(_ob) ((GraphPath*)((_ob)->oPathLink))
 // #define oPathWorkLen OBJECT_FIELD_S32(0x1F)
 
 #define d__gpf_SourceBhv ((uintptr_t *)bhvTestFollower)

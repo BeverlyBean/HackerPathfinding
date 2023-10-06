@@ -33,14 +33,14 @@ void bhv_TestFollower_loop(void) {
 
 	// }
 
-	// char t[10][50];
-	// GraphNode **pl = o->oPathWork;
-	// for (int i = 0; i < 10; i++) {
-	// 	sprintf(t[i], "%08X",
-	// 		pl[i]
-	// 	);
-	// 	print_text(20, 20 + (10 * i), t[i]);
-	// }
+	char t[10][50];
+	GraphPath *pl = o->oPathLink;
+	for (int i = 0; i < NEIGHBORSIZE; i++) {
+		sprintf(t[i], "%08X",
+			pl->neighbors[i]
+		);
+		print_text(20, 20 + (10 * i), t[i]);
+	}
 	char t2[50];
 	sprintf(t2, "%d", o->oPathWorkIdx);
 	print_text(20, 40, t2);
