@@ -6,7 +6,6 @@ void bhv_TestFollower_init(void) {
 	gpf_ObjectInit(o);
 
 	gpf_InitPath(o);
-	gpf_MakePath(o, gMarioObject);
 }
 void bhv_TestFollower_loop(void) {
 	static s32 switcher = 0;
@@ -15,33 +14,25 @@ void bhv_TestFollower_loop(void) {
 
 	gpf_ObjectUpdate(o);
 
+	gpf_MakePath(o, TARGET_PATH);
 	gpf_FollowPath(o);
 
-	if (o->oTimer % 30 == 0) {
-		switcher++;
-		if (switcher > 2) switcher = 0;
-	}
+	// if (o->oTimer % 30 == 0) {
+	// 	switcher++;
+	// 	if (switcher > 2) switcher = 0;
+	// }
 
-	// if (p->objects[switcher]) {
-	// 	obj_turn_toward_object(o, p->objects[switcher], O_MOVE_ANGLE_YAW_INDEX, 0x400);
+	// if (p->neighbors[switcher]) {
+		// obj_turn_toward_pos(o, p->neighbors[switcher]->position, O_MOVE_ANGLE_YAW_INDEX, 0x400);
+	// }
 
+	// for (int i = 0; i < NEIGHBORSIZE; i++) {
 	// 	char t[50];
-	// 	sprintf(t, "%08X %f", p->objects[switcher], p->distances[switcher]);
-	// 	print_text(50, 50, t);
+	// 	sprintf(t, "%08X %f", p->neighbors[switcher], p->distances[switcher]);
+	// 	print_text(50, 50 + (i* 10), t);
+	// }
 
 	// } else {
 
 	// }
-
-	char t[10][50];
-	GraphPath *pl = o->oPathLink;
-	for (int i = 0; i < NEIGHBORSIZE; i++) {
-		sprintf(t[i], "%08X",
-			pl->neighbors[i]
-		);
-		print_text(20, 20 + (10 * i), t[i]);
-	}
-	char t2[50];
-	sprintf(t2, "%d", o->oPathWorkIdx);
-	print_text(20, 40, t2);
 }

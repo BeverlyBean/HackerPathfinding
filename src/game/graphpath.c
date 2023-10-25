@@ -29,8 +29,65 @@ GraphPath gGraphPool[GPF_SIZE];
 int gPoolIdx = 1; // 0 is mario
 
 // worst case is that i need all this space
-struct GraphPath *gPathWork[OBJECT_POOL_CAPACITY][GPF_SIZE];
+struct GraphPath *gPathWork[FOLLOWER_COUNT][GPF_SIZE];
 int gPathIdx = 1; // 0 is mario
+
+f32 __gpf_distance(GraphPath *g1, GraphPath *g2) {
+    Vec3f d;
+    vec3_diff(d, g2->position, g1->position);
+    return vec3_mag(d);
+}
+
+s32 obj_turn_toward_pos(struct Object *obj, Vec3f target, s16 angleIndex, s16 turnAmount) {
+    Vec3f d;
+    s16 targetAngle = 0x0;
+    s16 startAngle;
+
+    switch (angleIndex) {
+        case O_MOVE_ANGLE_PITCH_INDEX:
+        case O_FACE_ANGLE_PITCH_INDEX:
+            d[0] = target[0] - obj->oPosX;
+            d[1] = -target[1] + obj->oPosY;
+            d[2] = target[2] - obj->oPosZ;
+
+            targetAngle = atan2s(sqrtf(sqr(d[0]) + sqr(d[2])), d[1]);
+            break;
+
+        case O_MOVE_ANGLE_YAW_INDEX:
+        case O_FACE_ANGLE_YAW_INDEX:
+            d[0] = target[0] - obj->oPosX;
+            d[2] = target[2] - obj->oPosZ;
+
+            targetAngle = atan2s(d[2], d[0]);
+            break;
+    }
+
+    startAngle = o->rawData.asU32[angleIndex];
+    o->rawData.asU32[angleIndex] = approach_s16_symmetric(startAngle, targetAngle, turnAmount);
+    return targetAngle;
+}
+
+// static f32 __gpf_distance(GraphPath *s, GraphPath *d) {
+//     Vec3f sv; vec3f_copy(sv, s->position);
+//     Vec3f dv; vec3f_copy(dv, d->position);
+
+//     f32 di = INFINITY;
+//     vec3f_get_dist(sv, dv, &di);
+
+//     return di;
+// }
+
+u32 gpf_count() {
+    int count = 0;
+
+    for (int i = 0; i < GPF_SIZE; i++) {
+        if (gGraphPool[i].init == TRUE) {
+            count++;
+        }
+    }
+
+    return count;
+}
 
 static void __gpf_ctor(GraphPath *p) {
     p->init = 1;
@@ -43,20 +100,20 @@ static void __gpf_ctor(GraphPath *p) {
     p->distances[2] = 0.0f;
 }
 
-u8 __gpf_CheckWall(Obj *o1, Obj *o2) {
+u8 __gpf_CheckWall(GraphPath *g1, GraphPath *g2) {
     struct Surface *hit = NULL;
     Vec3f hit_pos;
     Vec3f dir;
-    Vec3f oPosSource, oPosDest;
-    vec3f_copy(oPosSource, &o1->oPosX);
-    vec3f_copy(oPosDest, &o2->oPosX);
+    Vec3f srcPos, destPos;
+    vec3f_copy(srcPos, g1->position);
+    vec3f_copy(destPos, &g2->position);
 
-    oPosSource[1] += 15;
-    oPosDest[1] += 15;
+    srcPos[1] += 15;
+    destPos[1] += 15;
 
-    vec3f_diff(dir, oPosDest, oPosSource);
+    vec3f_diff(dir, destPos, srcPos);
     find_surface_on_ray(
-        oPosSource,
+        srcPos,
         dir,
         &hit,
         hit_pos,
@@ -66,10 +123,8 @@ u8 __gpf_CheckWall(Obj *o1, Obj *o2) {
     return (hit != NULL);
 }
 
-static Obj *__gpf_NearestObj(int i, GraphPath *p) {
-    Obj *_o = p->objLink;
-
-    Obj *closestObj = NULL;
+static GraphPath *__gpf_NearestPath(int i, GraphPath *p) {
+    GraphPath *closestPath = NULL;
     f32 minDist = 0x20000;
 
     f32 maxDist = 0;
@@ -81,37 +136,22 @@ static Obj *__gpf_NearestObj(int i, GraphPath *p) {
     }
 
     int counting = 0;
-    for (int __i = 0; __i < OBJECT_POOL_CAPACITY; __i++) {
+    for (int __i = 0; __i < GPF_SIZE; __i++) {
 
-        if (gObjectPool[__i].activeFlags == ACTIVE_FLAG_DEACTIVATED) {
+        if (gGraphPool[__i].init == FALSE) {
             continue;
         }
 
 
-        Obj *obj = &gObjectPool[__i];
+        GraphPath *check = &gGraphPool[__i];
 
-        GraphPath *p = OBJ_PATH(obj);
-        u32 foundBehav = 0;
-
-
-        if (((u32)p & 0xFF000000) == 0x80000000) {
-            if (p->magic == GPF_MAGIC) {
-                foundBehav = 1;
-            }
-        }
-
-        if (foundBehav 
-            && obj->activeFlags != ACTIVE_FLAG_DEACTIVATED
-            && obj != _o
+        f32 objDist = __gpf_distance(p, check);
+        if ((objDist <= minDist)
+         && (objDist > maxDist)
         ) {
-            f32 objDist = dist_between_objects(_o, obj);
-            if ((objDist <= minDist)
-             && (objDist > maxDist)
-            ) {
-                if (__gpf_CheckWall(_o, obj) == FALSE) {
-                    closestObj = obj;
-                    minDist = objDist;
-                }
+            if (__gpf_CheckWall(p, check) == FALSE) {
+                closestPath = check;
+                minDist = objDist;
             }
         }
         counting++;
@@ -119,10 +159,7 @@ static Obj *__gpf_NearestObj(int i, GraphPath *p) {
 
     p->distances[i] = minDist;
 
-    char t[50];
-    sprintf(t, "went through %d", counting);
-    assert(closestObj != NULL, t);
-    return closestObj;
+    return closestPath;
 }
 
 static GraphPath *__gpf_Pop() {
@@ -136,9 +173,7 @@ static GraphPath *__gpf_Pop() {
     return ret;
 }
 
-static void __gpf_NeighborFunc(Obj *oo) {
-    GraphPath *p = OBJ_PATH(oo);
-
+static void __gpf_NeighborFunc(GraphPath *p) {
     // todo: replace with 3-minimum function that i couldnt get working before
     for (int i = 0; i < NEIGHBORSIZE; i++) {
         if (p->neighbors[i] != NULL) {
@@ -148,86 +183,77 @@ static void __gpf_NeighborFunc(Obj *oo) {
             }
         }
 
-        p->objects[i] = __gpf_NearestObj(i, p);
+        GraphPath *np = __gpf_NearestPath(i, p);
 
-
-        Obj *oi = p->objects[i];
-        if (oi == NULL) continue;
-
-        if (OBJ_PATH(oi) == NULL) {
-            gpf_ObjectInit(oi);
-
-        }
-        p->neighbors[i] = OBJ_PATH(oi);
+        if (np == NULL) continue;
+        p->neighbors[i] = np;
     }
 }
 
-static void __gpf_UpdateNeighbors(Obj *oo) {
-    GraphPath *p = OBJ_PATH(oo);
+static void __gpf_UpdateNeighbors(GraphPath *p) {
     assert(p != NULL, "No Path");
     // todo: replace with 3-minimum function that i couldnt get working before
     for (int i = 0; i < NEIGHBORSIZE; i++) {
-        p->objects[i] = __gpf_NearestObj(i, p);
-
-
-        Obj *oi = p->objects[i];
-        if (oi == NULL) continue;
-
-        if (OBJ_PATH(oi) == NULL) {
-            gpf_ObjectInit(oi);
-        }
-        p->neighbors[i] = OBJ_PATH(oi);
+        p->neighbors[i] = __gpf_NearestPath(i, p);
     }
 }
 
-static void __gpf_Link(Obj *oo, GraphPath *p) {
+void gpf_setup_neighbors() {
+    for (int i = 0; i < GPF_SIZE; i++) {
+        __gpf_UpdateNeighbors(&gGraphPool[i]);
+    }
+}
+
+typedef enum LM {
+    SINGLE_LINK,
+    DOUBLE_LINK,
+} _GPFLinkMode;
+static void __gpf_Link(_GPFLinkMode mode, Obj *oo, GraphPath *p) {
     oo->oPathLink = (s32 *)p;
-    p->objLink = oo;
+    if (mode == DOUBLE_LINK) {
+        p->objLink = oo;
+    } else {
+        p->objLink = NULL;
+    }
 
     vec3f_copy(p->position, &o->oPosX);
 
     // viral init?
-    __gpf_NeighborFunc(oo);
+    // __gpf_NeighborFunc(oo);
 }
 
 void gpf_ObjectInit(Obj *oo) {
     GraphPath *p = __gpf_Pop();
 
-    __gpf_Link(oo, p);
+    __gpf_Link(DOUBLE_LINK, oo, p);
+}
+
+void gpf_PathInit(Obj *oo) {
+    GraphPath *p = __gpf_Pop();
+
+    __gpf_Link(SINGLE_LINK, oo, p);
 }
 
 void gpf_ObjectUpdate(Obj *oo) {
     GraphPath *p = OBJ_PATH(oo);
 
-    vec3f_copy(p->position, &o->oPosX);
+    vec3f_copy(p->position, &oo->oPosX);
 
-    __gpf_UpdateNeighbors(oo);
+    __gpf_UpdateNeighbors(p);
 }
 
 void mario_graphpath_init() {
-    __gpf_Link(gMarioObject, &gGraphPool[0]);
+    __gpf_Link(DOUBLE_LINK, gMarioObject, &gGraphPool[0]);
 }
 
 void mario_graphpath_update() {
     gpf_ObjectUpdate(gMarioObject);
-
-    // TODO: have it regenerate neighbors for each of mario's neighbors
 }
 
 void gpf_InitPath(struct Object *oo) {
     oo->oPathWork = &gPathWork[gPathIdx++];
     oo->oPathWorkIdx = 0;
     // oo->oPathWorkLen = 0;
-}
-
-static f32 __gpf_distance(GraphPath *s, GraphPath *d) {
-    Vec3f sv; vec3f_copy(sv, s->position);
-    Vec3f dv; vec3f_copy(dv, d->position);
-
-    f32 di = INFINITY;
-    vec3f_get_dist(sv, dv, &di);
-
-    return di;
 }
 
 static GraphPath *__gpf_searchMinDist(GraphPath **Q, f32 *distances, u32 front, u32 back) {
@@ -252,7 +278,7 @@ static GraphPath *__gpf_searchMinDist(GraphPath **Q, f32 *distances, u32 front, 
     return Q[front];
 }
 
-void find_shortest_path(GraphPath *source, GraphPath *dest, GraphPath **path) {
+void gpf_find_shortest_path(GraphPath *source, GraphPath *dest, GraphPath **path) {
     // Initialize data structures
 
     GraphPath *prev[GPF_SIZE];
@@ -319,8 +345,8 @@ void find_shortest_path(GraphPath *source, GraphPath *dest, GraphPath **path) {
     so->oPathWorkIdx = -1;
 }
 
-void gpf_MakePath(struct Object *oo, struct Object *dest) {
-    find_shortest_path(OBJ_PATH(oo), OBJ_PATH(dest), oo->oPathWork);
+void gpf_MakePath(struct Object *oo, GraphPath *dest) {
+    gpf_find_shortest_path(OBJ_PATH(oo), dest, oo->oPathWork);
 }
 
 void gpf_FollowPath(struct Object *oo) {
@@ -333,9 +359,9 @@ void gpf_FollowPath(struct Object *oo) {
     GraphPath *toFollow = pl[oo->oPathWorkIdx];
 
 
-    obj_turn_toward_object(oo, toFollow->objLink, O_MOVE_ANGLE_YAW_INDEX, 0x400);
+    obj_turn_toward_pos(oo, toFollow->position, O_MOVE_ANGLE_YAW_INDEX, 0x400);
 
-    if (dist_between_objects(oo, toFollow->objLink) < 10.0f) {
+    if (__gpf_distance(oo->oPathLink, toFollow) < 10.0f) {
         oo->oPathWorkIdx--;
     }
 

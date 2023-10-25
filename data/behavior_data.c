@@ -6130,7 +6130,6 @@ const BehaviorScript bhvPathNodeMaestro[] = {
 	BEGIN(OBJ_LIST_DEFAULT),
     OR_INT(oFlags,OBJ_FLAG_ACTIVE_FROM_AFAR),
 	CALL_NATIVE(bhv_PathNodeMaestro_init),
-    DELAY(1),
 	BEGIN_LOOP(),
         CALL_NATIVE(bhv_PathNodeMaestro_loop),
     END_LOOP(),
