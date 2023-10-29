@@ -2,7 +2,7 @@
 
 #include "object_fields.h"
 
-#define NEIGHBORSIZE 1
+#define NEIGHBORSIZE 3
 #define GPF_SIZE 25
 
 typedef struct _Graph {

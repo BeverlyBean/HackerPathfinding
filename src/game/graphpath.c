@@ -32,6 +32,19 @@ int gPoolIdx = 1; // 0 is mario
 struct GraphPath *gPathWork[FOLLOWER_COUNT][GPF_SIZE];
 int gPathIdx = 1; // 0 is mario
 
+Obj *maestro = NULL;
+// Maestro Interface
+void gpf_MaestroInit(Obj *oo) {
+    maestro = oo;
+}
+u8 gpf_AllPathsRegistered() {
+    if (maestro == NULL) {
+        return FALSE;
+    } else {
+        return (maestro->oAction == 2);
+    }
+}
+
 f32 __gpf_distance(GraphPath *g1, GraphPath *g2) {
     Vec3f d;
     vec3_diff(d, g2->position, g1->position);
@@ -128,14 +141,6 @@ static GraphPath *__gpf_NearestPath(int i, GraphPath *p) {
     f32 minDist = 0x20000;
 
     f32 maxDist = 0;
-    switch (i) {
-        case 0: break;
-        case 1: maxDist = p->distances[0]; break;
-        #define __max(a, b) (((a) <= (b)) ? (b) : (a))
-        case 2: maxDist = __max(p->distances[1], p->distances[2]); break;
-    }
-
-    int counting = 0;
     for (int __i = 0; __i < GPF_SIZE; __i++) {
 
         if (gGraphPool[__i].init == FALSE) {
@@ -149,12 +154,18 @@ static GraphPath *__gpf_NearestPath(int i, GraphPath *p) {
         if ((objDist <= minDist)
          && (objDist > maxDist)
         ) {
+            u8 skipAssign = FALSE;
+            for (int j = 0; j < NEIGHBORSIZE; j++) {
+                if (p->neighbors[j] == check && j != i) {
+                    skipAssign = TRUE;
+                }
+            }
+            if (skipAssign) continue;
             if (__gpf_CheckWall(p, check) == FALSE) {
                 closestPath = check;
                 minDist = objDist;
             }
         }
-        counting++;
     }
 
     p->distances[i] = minDist;
@@ -164,6 +175,7 @@ static GraphPath *__gpf_NearestPath(int i, GraphPath *p) {
 
 static GraphPath *__gpf_Pop() {
     u32 idx = gPoolIdx++;
+    assert(idx < GPF_SIZE, "POP TOO MANY");
 
     GraphPath *ret = &gGraphPool[idx];
     __gpf_ctor(ret);
@@ -243,6 +255,7 @@ void gpf_ObjectUpdate(Obj *oo) {
 }
 
 void mario_graphpath_init() {
+    __gpf_ctor(&gGraphPool[0]);
     __gpf_Link(DOUBLE_LINK, gMarioObject, &gGraphPool[0]);
 }
 
@@ -275,17 +288,22 @@ static GraphPath *__gpf_searchMinDist(GraphPath **Q, f32 *distances, u32 front, 
     Q[idx] = tmp;
     Q[front]->_inQueue = 0;
 
+    // f32 dist = distances[front];
+    // distances[front] = distances[idx];
+    // distances[idx] = dist;
+
     return Q[front];
 }
 
 void gpf_find_shortest_path(GraphPath *source, GraphPath *dest, GraphPath **path) {
     // Initialize data structures
-
     GraphPath *prev[GPF_SIZE];
     float distancesTo[GPF_SIZE];
     GraphPath *Q[GPF_SIZE];
     u32 Q_front = 0;
     u32 Q_back = 0;
+
+    osSyncPrintf(__FUNCTION__);
 
     for (int i = 0; i < GPF_SIZE; i++) {
         distancesTo[i] = 0;
@@ -299,12 +317,15 @@ void gpf_find_shortest_path(GraphPath *source, GraphPath *dest, GraphPath **path
     }
     distancesTo[source->_index] = 0;
 
-    while (Q_front != !Q_back) {
+    while (Q_front != Q_back) {
         GraphPath *candidate = __gpf_searchMinDist(Q, distancesTo, Q_front, Q_back);
         Q_front++; // effectively popped queue
 
+        osSyncPrintf("CANDIDATE %d DEST %d", candidate->_index, dest->_index);
+
         // short circuit check
         if (candidate == dest) {
+            osSyncPrintf("FOUND FULL PATH!");
             GraphPath *end = dest;
 
             if (prev[end->_index] || end == source) {
@@ -326,6 +347,25 @@ void gpf_find_shortest_path(GraphPath *source, GraphPath *dest, GraphPath **path
 
         for (int i = 0; i < NEIGHBORSIZE; i++) {
             if (candidate->neighbors[i] == NULL) continue;
+            if (candidate->neighbors[i] == dest) {
+                osSyncPrintf("FOUND FULL PATH! (NEIGHBOR)");
+                GraphPath *end = dest;
+
+                if (prev[end->_index] || end == source) {
+                    u32 idx = 0;
+
+                    while (end != NULL) {
+                        path[idx] = end;
+                        end = prev[end->_index];
+                    }
+
+                    Obj *so = source->objLink;
+
+                    // TODO: - 1?
+                    so->oPathWorkIdx = idx - 1;
+                    return;
+                }
+            }
 
             if (candidate->neighbors[i]->_inQueue == 1) {
                 f32 alt = candidate->distances[i] + distancesTo[candidate->_index];

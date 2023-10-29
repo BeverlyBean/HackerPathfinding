@@ -4,6 +4,7 @@
 void bhv_PathNodeMaestro_init(void) {
 	o->oMaestroNodeCount = 0;
 	o->oAction = 0;
+	gpf_MaestroInit(o);
 }
 
 
@@ -24,10 +25,6 @@ void bhv_PathNodeMaestro_loop(void) {
 		}
 		break;
 		case 2: {
-			// either:
-			// mark_obj_for_deletion(o);
-			// or:
-			// set up neighbors if e.g. a new path node is spawned
 			if (oc != o->oMaestroNodeCount) {
 				o->oMaestroNodeCount = oc;
 				o->oAction = 1;
@@ -35,5 +32,5 @@ void bhv_PathNodeMaestro_loop(void) {
 		}
 	}
 
-	print_text_fmt_int(50,50, "%d", oc);
+	// print_text_fmt_int(50,50, "%d", oc);
 }
